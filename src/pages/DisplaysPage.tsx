@@ -19,6 +19,7 @@ export default function DisplaysPage() {
   const [showMediaUpload, setShowMediaUpload] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   useEffect(() => {
     if (user?.restaurant) {
@@ -546,13 +547,13 @@ export default function DisplaysPage() {
                     <div className="relative">
                       {selectedDisplay.mediaType === 'image' ? (
                         <img 
-                          src={`http://localhost:3001${selectedDisplay.mediaUrl}`} 
+                          src={`${API_BASE_URL}${selectedDisplay.mediaUrl}`} 
                           alt="Display media"
                           className="w-full h-32 object-cover rounded"
                         />
                       ) : (
                         <video 
-                          src={`http://localhost:3001${selectedDisplay.mediaUrl}`} 
+                          src={`${API_BASE_URL}${selectedDisplay.mediaUrl}`} 
                           className="w-full h-32 object-cover rounded"
                           controls
                         />
