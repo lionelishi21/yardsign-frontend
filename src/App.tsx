@@ -33,7 +33,6 @@ function App() {
             isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
           } />
           
-          
           {/* Display client route */}
           <Route path="/display" element={<DisplayClient />} />
           
