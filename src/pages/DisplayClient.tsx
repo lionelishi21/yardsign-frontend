@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { displayAPI } from '../services/api';
 import type { Display, Menu } from '../types';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export default function DisplayClient() {
   const [display, setDisplay] = useState<Display | null>(null);
   const [loading, setLoading] = useState(true);
@@ -165,7 +167,7 @@ export default function DisplayClient() {
           <div className="w-full h-full">
             {display.mediaType === 'image' ? (
               <img 
-                src={`http://localhost:3001${display.mediaUrl}`} 
+                src={`${API_BASE_URL}${display.mediaUrl}`} 
                 alt="Display media"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -174,7 +176,7 @@ export default function DisplayClient() {
               />
             ) : display.mediaType === 'video' ? (
               <video 
-                src={`http://localhost:3001${display.mediaUrl}`} 
+                src={`${API_BASE_URL}${display.mediaUrl}`} 
                 autoPlay 
                 loop 
                 muted
@@ -276,7 +278,7 @@ function MenuViewer({ menu, hasMedia = false }: MenuViewerProps) {
             {currentItem.imageUrl && (
               <div className="w-full lg:w-1/2">
                 <img
-                  src={`http://localhost:3001${currentItem.imageUrl}`}
+                  src={`${API_BASE_URL}${currentItem.imageUrl}`}
                   alt={currentItem.name}
                   className="w-full h-64 lg:h-96 object-cover rounded-xl shadow-lg"
                 />
