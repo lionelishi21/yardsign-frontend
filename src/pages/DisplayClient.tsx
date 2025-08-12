@@ -4,7 +4,7 @@ import { displayAPI } from '../services/api';
 import type { Display, Menu } from '../types';
 
 // const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';  
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yaadsign.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yaadsign.com';
 
 export default function DisplayClient() {
   const [display, setDisplay] = useState<Display | null>(null);
