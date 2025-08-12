@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth.tsx';
 
@@ -12,6 +12,14 @@ export default function LoginPage() {
 
   const { login, register } = useAuth();
 
+  // Pre-populate admin credentials
+  useEffect(() => {
+    // Set default admin credentials
+    setEmail('admin@yardsign.com');
+    setPassword('admin123');
+    setRestaurantName('YardSign Restaurant');
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -23,6 +31,20 @@ export default function LoginPage() {
       } else {
         await register(email, password, restaurantName);
       }
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickLogin = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      await login('admin@yardsign.com', 'admin123');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
       setError(error.response?.data?.error || 'An error occurred');
@@ -47,6 +69,34 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">YardSign</h1>
             <p className="text-gray-600">Digital Menu Board System</p>
           </motion.div>
+
+          {/* Quick Login Button */}
+          {isLogin && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6"
+            >
+              <button
+                onClick={handleQuickLogin}
+                disabled={loading}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Quick Login...
+                  </div>
+                ) : (
+                  '🚀 Quick Login (Admin)'
+                )}
+              </button>
+              <div className="text-center text-xs text-gray-500 mb-4">
+                Pre-filled with admin credentials
+              </div>
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -160,6 +210,22 @@ export default function LoginPage() {
               )}
             </motion.button>
           </form>
+
+          {/* Admin Credentials Info */}
+          {isLogin && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
+            >
+              <h3 className="text-sm font-medium text-blue-900 mb-2">Admin Credentials:</h3>
+              <div className="text-xs text-blue-700 space-y-1">
+                <div><strong>Email:</strong> admin@yardsign.com</div>
+                <div><strong>Password:</strong> admin123</div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </div>
