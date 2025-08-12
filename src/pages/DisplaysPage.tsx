@@ -19,7 +19,7 @@ export default function DisplaysPage() {
   const [showMediaUpload, setShowMediaUpload] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yaadsign.com';
 
   useEffect(() => {
     if (user?.restaurant) {
