@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Restaurant, Menu, Item, Display, AuthResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL ='http://ec2-3-145-160-47.us-east-2.compute.amazonaws.com/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
