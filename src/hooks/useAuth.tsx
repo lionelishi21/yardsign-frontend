@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('user', JSON.stringify(response.user));
       setUser(response.user);
     } catch (error) {
+      alert('Invalid email or password');
       console.error('Login error:', error);
       throw error;
     }
