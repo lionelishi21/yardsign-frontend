@@ -2,13 +2,16 @@ import axios from 'axios';
 import type { Restaurant, Menu, Item, Display, AuthResponse } from '../types';
 
 // const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-const API_BASE_URL ='https://api.yaadsign.com';
+const API_BASE_URL = 'https://api.yardsign.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 second timeout
+  maxContentLength: 50 * 1024 * 1024, // 50MB max file size
+  maxBodyLength: 50 * 1024 * 1024, // 50MB max body size
 });
 
 // Request interceptor to add auth token
@@ -190,6 +193,11 @@ export const displayAPI = {
     const response = await api.post(`/displays/${displayId}/upload-media`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 60 second timeout for uploads
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('Upload progress:', percentCompleted + '%');
       },
     });
     return response.data;
