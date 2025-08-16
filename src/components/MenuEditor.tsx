@@ -37,9 +37,9 @@ export default function MenuEditor({ menu, onSave, onCancel }: MenuEditorProps) 
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragStart = useCallback((e: React.DragEvent, itemId: string) => {
+  const handleDragStart = useCallback((_event: MouseEvent | TouchEvent | PointerEvent, info: any) => {
+    const itemId = info.itemId;
     setSelectedItem(itemId);
-    e.dataTransfer.setData('text/plain', itemId);
   }, []);
 
   const handleDragEnd = useCallback(() => {
@@ -177,7 +177,7 @@ export default function MenuEditor({ menu, onSave, onCancel }: MenuEditorProps) 
               dragMomentum={false}
               dragElastic={0.1}
               dragConstraints={{ left: 0, top: 0, right: 0, bottom: 0 }}
-              onDragStart={(e) => handleDragStart(e, item.id)}
+              onDragStart={(event, info) => handleDragStart(event, { ...info, itemId: item.id })}
               onDragEnd={handleDragEnd}
                              onClick={(e) => {
                  e.stopPropagation();

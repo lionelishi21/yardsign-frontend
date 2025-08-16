@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Restaurant, Menu, Item, Display, AuthResponse } from '../types';
+import type { Restaurant, Menu, Item, Display, AuthResponse, ScheduledContent, MediaItem, DisplaySettings } from '../types';
 
 // const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const API_BASE_URL = 'https://api.yaadsign.com';
@@ -196,7 +196,7 @@ export const displayAPI = {
       },
       timeout: 60000, // 60 second timeout for uploads
       onUploadProgress: (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
         console.log('Upload progress:', percentCompleted + '%');
       },
     });
@@ -206,6 +206,65 @@ export const displayAPI = {
   removeMedia: async (displayId: string): Promise<Display> => {
     const response = await api.delete(`/displays/${displayId}/media`);
     return response.data;
+  },
+
+  // NEW: Multiple media upload for scheduling
+  uploadScheduledMedia: async (displayId: string, files: File[]): Promise<{ mediaItems: MediaItem[]; count: number }> => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('media', file);
+    });
+    
+    const response = await api.post(`/displays/${displayId}/upload-scheduled-media`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 120000, // 2 minute timeout for multiple uploads
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+        console.log('Upload progress:', percentCompleted + '%');
+      },
+    });
+    return response.data;
+  },
+
+  // NEW: Scheduling functions
+  addScheduledContent: async (
+    displayId: string, 
+    content: { type: 'menu' | 'media'; menuId?: string; mediaItems?: MediaItem[] }, 
+    schedule: { type: 'always' | 'time_range' | 'recurring'; startTime?: string; endTime?: string; daysOfWeek?: string[]; startDate?: string; endDate?: string }, 
+    priority: number = 0
+  ): Promise<ScheduledContent> => {
+    const response = await api.post(`/displays/${displayId}/schedule`, {
+      content,
+      schedule,
+      priority
+    });
+    return response.data.scheduledItem;
+  },
+
+  getScheduledContent: async (displayId: string): Promise<{ scheduledContent: ScheduledContent[]; settings: DisplaySettings }> => {
+    const response = await api.get(`/displays/${displayId}/schedule`);
+    return response.data;
+  },
+
+  updateScheduledContent: async (displayId: string, itemId: string, updates: Partial<ScheduledContent>): Promise<ScheduledContent> => {
+    const response = await api.put(`/displays/${displayId}/schedule/${itemId}`, updates);
+    return response.data.scheduledItem;
+  },
+
+  deleteScheduledContent: async (displayId: string, itemId: string): Promise<void> => {
+    await api.delete(`/displays/${displayId}/schedule/${itemId}`);
+  },
+
+  getActiveContent: async (displayId: string): Promise<{ content: Array<{ type: string; data: unknown }>; settings: DisplaySettings; lastUpdated: string }> => {
+    const response = await api.get(`/displays/${displayId}/active-content`);
+    return response.data;
+  },
+
+  updateDisplaySettings: async (displayId: string, settings: Partial<DisplaySettings>): Promise<DisplaySettings> => {
+    const response = await api.patch(`/displays/${displayId}/settings`, { settings });
+    return response.data.settings;
   },
 
   deleteDisplay: async (displayId: string): Promise<void> => {
