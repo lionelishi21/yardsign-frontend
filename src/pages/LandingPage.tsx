@@ -607,7 +607,6 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      // CTA Section
 <section className="relative z-10 py-32 overflow-hidden">
   <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"></div>
   <div className="absolute inset-0">
