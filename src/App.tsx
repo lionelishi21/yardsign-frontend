@@ -53,9 +53,7 @@ function AppContent() {
     <div className={isFullScreenRoute ? "h-screen w-screen" : "min-h-screen bg-gray-50"}>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={
-          isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <LandingPage />
-        } />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={
           isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <LoginPage />
         } />

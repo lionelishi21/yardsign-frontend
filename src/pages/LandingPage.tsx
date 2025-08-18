@@ -2,6 +2,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import icon from '../assets/yaadsign-icon.png';
 
 export default function LandingPage() {
@@ -9,8 +10,18 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollYProgress } = useScroll();
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const { isAuthenticated } = useAuth();
 
   const navigate = useNavigate();
+  
+  // Add a back button handler for when users come from other pages
+  const handleBackClick = () => {
+    if (document.referrer && document.referrer.includes(window.location.origin)) {
+      window.history.back();
+    } else {
+      navigate('/');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +35,10 @@ export default function LandingPage() {
     // In a real app, this would navigate to sign-up page
     console.log('Navigating to get started...');
     navigate('/signup');
+  };
+
+  const handleAccountClick = () => {
+    navigate('/admin/dashboard');
   };
 
 
@@ -204,6 +219,21 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
+            {/* Back Button - Only show if there's a referrer */}
+            {document.referrer && document.referrer.includes(window.location.origin) && (
+              <motion.button
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                onClick={handleBackClick}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors duration-200 mr-4"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="font-medium">Back</span>
+              </motion.button>
+            )}
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="flex items-center space-x-3 cursor-pointer"
@@ -236,19 +266,35 @@ export default function LandingPage() {
               ))}
             </nav>
 
+            <div className="flex items-center space-x-4">
+              {!isAuthenticated && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.7 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/login')}
+                  type="button"
+                  className="text-gray-700 hover:text-blue-600 font-semibold py-2 px-4 transition-colors duration-200"
+                >
+                  Login
+                </motion.button>
+              )}
+
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.8 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleGetStarted}
+              onClick={isAuthenticated ? handleAccountClick : handleGetStarted}
               type="button"
-              className=" bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Get Started
+              {isAuthenticated ? 'Account' : 'Get Started'}
             </motion.button>
+            </div>
           </div>
         </div>
       </motion.header>
@@ -591,14 +637,14 @@ export default function LandingPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={handleGetStarted}
+                  onClick={isAuthenticated ? handleAccountClick : handleGetStarted}
                   className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
                     plan.popular
                       ? `bg-gradient-to-r ${plan.gradient} text-white shadow-lg hover:shadow-xl`
                       : 'backdrop-blur-sm bg-gray-100/80 text-gray-900 hover:bg-gray-200/80 border border-gray-200'
                   }`}
                 >
-                  Get Started
+                  {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
                 </motion.button>
               </motion.div>
             ))}
@@ -635,7 +681,7 @@ export default function LandingPage() {
         whileInView={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
       >
-        Ready to transform your restaurant?
+        {isAuthenticated ? 'Welcome back!' : 'Ready to transform your restaurant?'}
       </motion.h2>
       <motion.p 
         className="text-xl text-blue-100 mb-12 leading-relaxed"
@@ -643,33 +689,54 @@ export default function LandingPage() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
       >
-        Join thousands of restaurants already using YaadSign to create amazing digital menu experiences.
+        {isAuthenticated 
+          ? 'Continue managing your digital menus and displays from your dashboard.'
+          : 'Join thousands of restaurants already using YaadSign to create amazing digital menu experiences.'
+        }
       </motion.p>
       
-      <motion.form 
-        onSubmit={handleSubmitEmail} 
-        className="max-w-md mx-auto flex gap-4 mb-8"
-        initial={{ opacity: 0, scale: 0.8 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, delay: 0.6 }}
-      >
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          className="flex-1 px-6 py-4 rounded-2xl border-0 focus:ring-4 focus:ring-blue-300 text-gray-900 backdrop-blur-sm bg-white/90 shadow-lg"
-          required
-        />
-        <motion.button
-          type="submit"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="backdrop-blur-sm bg-white/90 text-blue-600 px-8 py-4 rounded-2xl hover:bg-white transition-all duration-300 font-bold shadow-lg hover:shadow-xl"
+      {isAuthenticated ? (
+        <motion.div
+          className="max-w-md mx-auto mb-8"
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
         >
-          Start Free Trial
-        </motion.button>
-      </motion.form>
+          <motion.button
+            onClick={handleAccountClick}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="backdrop-blur-sm bg-white/90 text-blue-600 px-8 py-4 rounded-2xl hover:bg-white transition-all duration-300 font-bold shadow-lg hover:shadow-xl w-full"
+          >
+            Go to Dashboard
+          </motion.button>
+        </motion.div>
+      ) : (
+        <motion.form 
+          onSubmit={handleSubmitEmail} 
+          className="max-w-md mx-auto flex gap-4 mb-8"
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            className="flex-1 px-6 py-4 rounded-2xl border-0 focus:ring-4 focus:ring-blue-300 text-gray-900 backdrop-blur-sm bg-white/90 shadow-lg"
+            required
+          />
+          <motion.button
+            type="submit"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="backdrop-blur-sm bg-white/90 text-blue-600 px-8 py-4 rounded-2xl hover:bg-white transition-all duration-300 font-bold shadow-lg hover:shadow-xl"
+          >
+            Start Free Trial
+          </motion.button>
+        </motion.form>
+      )}
       
       <motion.p 
         className="text-blue-100 text-lg"
@@ -677,7 +744,10 @@ export default function LandingPage() {
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.8 }}
       >
-        14-day free trial • No credit card required • Cancel anytime
+        {isAuthenticated 
+          ? 'Manage your restaurant • Update menus • Monitor displays'
+          : '14-day free trial • No credit card required • Cancel anytime'
+        }
       </motion.p>
     </motion.div>
   </div>

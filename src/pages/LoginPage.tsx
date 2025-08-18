@@ -16,11 +16,11 @@ export default function LoginPage() {
   const { login, register } = useAuth();
 
   // Pre-populate admin credentials
-  useEffect(() => {
-    setEmail('admin@yardsign.com');
-    setPassword('password123');
-    setRestaurantName('YardSign Restaurant');
-  }, []);
+  // useEffect(() => {
+  //   setEmail('admin@yardsign.com');
+  //   setPassword('password123');
+  //   setRestaurantName('YardSign Restaurant');
+  // }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,6 +53,19 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Back Button */}
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+        onClick={() => navigate('/')}
+        className="absolute top-8 left-8 z-20 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        <span className="font-medium">Back to Home</span>
+      </motion.button>
       {/* Animated SVG Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
         <svg
