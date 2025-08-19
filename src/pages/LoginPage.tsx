@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login, register } = useAuth();
+  
 
   // Pre-populate admin credentials
   // useEffect(() => {
