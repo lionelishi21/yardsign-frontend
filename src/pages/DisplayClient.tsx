@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { displayAPI } from '../services/api';
 import type { Display, Menu } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';  
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yaadsign.com';
 
 export default function DisplayClient() {
   const [display, setDisplay] = useState<Display | null>(null);
@@ -11,6 +12,7 @@ export default function DisplayClient() {
   const [error, setError] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState('');
   const [isPaired, setIsPaired] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     // Check if we have a pairing code in localStorage
@@ -22,7 +24,67 @@ export default function DisplayClient() {
       console.log('No pairing code found in localStorage');
       setLoading(false);
     }
+
+    // Enter full screen mode automatically
+    enterFullScreen();
+
+    // Handle full screen changes
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+
+    // Handle keyboard shortcuts
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // F11 or F key to toggle full screen
+      if (e.key === 'F11' || e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullScreen();
+      }
+      // Escape to exit full screen
+      if (e.key === 'Escape' && document.fullscreenElement) {
+        exitFullScreen();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+      document.removeEventListener('keydown', handleKeyPress);
+    };
   }, []);
+
+  const enterFullScreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullScreen(true);
+      }
+    } catch (error) {
+      console.log('Full screen not supported or denied:', error);
+    }
+  };
+
+  const exitFullScreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        setIsFullScreen(false);
+      }
+    } catch (error) {
+      console.log('Error exiting full screen:', error);
+    }
+  };
+
+  const toggleFullScreen = () => {
+    if (document.fullscreenElement) {
+      exitFullScreen();
+    } else {
+      enterFullScreen();
+    }
+  };
 
   const fetchDisplayByPairingCode = async (code: string) => {
     try {
@@ -69,7 +131,7 @@ export default function DisplayClient() {
   // Show loading screen
   if (loading) {
     return (
-      <div className="h-screen w-screen bg-black text-white flex items-center justify-center">
+      <div className="display-route h-screen w-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-xl">Loading...</p>
@@ -81,7 +143,7 @@ export default function DisplayClient() {
   // Show pairing form only if not paired and no display data
   if (!isPaired && !display) {
     return (
-      <div className="h-screen w-screen bg-black text-white flex items-center justify-center">
+      <div className="display-route h-screen w-screen bg-black text-white flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -120,6 +182,12 @@ export default function DisplayClient() {
               </button>
             </div>
           </div>
+          
+          {/* Full screen controls */}
+          <div className="mt-8 text-sm text-gray-500">
+            <p>Press F11 or F to toggle full screen</p>
+            <p>Press ESC to exit full screen</p>
+          </div>
         </motion.div>
       </div>
     );
@@ -128,7 +196,7 @@ export default function DisplayClient() {
   // Show error if no display data
   if (!display) {
     return (
-      <div className="h-screen w-screen bg-black text-white flex items-center justify-center">
+      <div className="display-route h-screen w-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Display Not Found</h1>
           <p className="text-xl text-gray-400">Please check your pairing code</p>
@@ -153,12 +221,21 @@ export default function DisplayClient() {
   console.log('Current menu:', display.currentMenu);
 
   return (
-    <div className="h-screen w-screen bg-black text-white overflow-hidden relative">
+    <div className="display-route h-screen w-screen bg-black text-white overflow-hidden relative">
       {/* Display Name Overlay - Small, Non-intrusive */}
       <div className="absolute top-4 left-4 z-50 bg-black bg-opacity-60 rounded-lg px-4 py-2">
         <h1 className="text-lg font-bold">{display.name}</h1>
         <p className="text-xs text-gray-300">{new Date().toLocaleTimeString()}</p>
       </div>
+
+      {/* Full Screen Toggle Button */}
+      <button
+        onClick={toggleFullScreen}
+        className="absolute top-4 right-4 z-50 bg-black bg-opacity-60 rounded-lg px-3 py-2 text-white hover:bg-opacity-80 transition-all"
+        title="Toggle Full Screen (F11)"
+      >
+        {isFullScreen ? '⛶' : '⛶'}
+      </button>
 
       {/* Full Screen Content */}
       <div className="h-full w-full">

@@ -1,0 +1,63 @@
+{
+  "name": "YardSign - Digital Menu Board System",
+  "short_name": "YardSign",
+  "description": "Professional digital menu board system for restaurants",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#FF6B35",
+  "orientation": "portrait-primary",
+  "categories": ["business", "food", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/yaadsign-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/yaadsign-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/yaadsign-icon.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Access your restaurant dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/yaadsign-icon.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Displays",
+      "short_name": "Displays",
+      "description": "Manage your displays",
+      "url": "/displays",
+      "icons": [
+        {
+          "src": "/yaadsign-icon.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+} 

@@ -35,6 +35,45 @@ export interface Menu {
   updatedAt: string;
 }
 
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+  name: string;
+  duration: number;
+  uploadedAt: string;
+}
+
+export interface ScheduleConfig {
+  type: 'always' | 'time_range' | 'recurring';
+  startTime?: string; // "HH:MM"
+  endTime?: string;   // "HH:MM"
+  daysOfWeek?: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[];
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface ScheduledContent {
+  id: string;
+  content: {
+    type: 'menu' | 'media';
+    menuId?: string;
+    mediaItems?: MediaItem[];
+  };
+  schedule: ScheduleConfig;
+  priority: number;
+  isActive: boolean;
+}
+
+export interface DisplaySettings {
+  slideshow: {
+    enabled: boolean;
+    interval: number; // seconds
+    transition: 'fade' | 'slide' | 'none';
+  };
+  autoRefresh: boolean;
+  refreshInterval: number; // seconds
+}
+
 export interface Display {
   id: string;
   name: string;
@@ -42,6 +81,8 @@ export interface Display {
   currentMenu?: Menu;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  scheduledContent?: ScheduledContent[];
+  settings?: DisplaySettings;
   createdAt: string;
   updatedAt: string;
 }
