@@ -79,16 +79,36 @@ export const itemsApi = apiSlice.injectEndpoints({
 
     // Upload item image
     uploadItemImage: builder.mutation<Item, { itemId: string; file: File }>({
-      query: ({ itemId, file }) => {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        return {
-          url: `/items/${itemId}/upload-image`,
-          method: 'POST',
-          body: formData,
-          formData: true,
-        };
+      queryFn: async ({ itemId, file }, _queryApi, _extraOptions, fetchWithBQ) => {
+        try {
+          // 1. Get presigned URL
+          const presignedResult = await fetchWithBQ({
+            url: `/items/${itemId}/upload-url?fileType=${encodeURIComponent(file.type)}`,
+            method: 'GET',
+          });
+
+          if (presignedResult.error) return { error: presignedResult.error };
+
+          const { uploadUrl, imageUrl } = presignedResult.data as { uploadUrl: string, imageUrl: string };
+
+          // 2. Upload to S3 directly
+          const s3Response = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type,
+            }
+          });
+
+          if (!s3Response.ok) {
+            return { error: { status: s3Response.status, data: 'Failed to upload to S3' } as any };
+          }
+
+          // Return partial item, or the UI might rely on invalidatesTags
+          return { data: { id: itemId, imageUrl } as unknown as Item };
+        } catch (error) {
+          return { error: { status: 500, data: String(error) } as any };
+        }
       },
       invalidatesTags: (result, error, { itemId }) => [
         { type: 'Item', id: itemId },

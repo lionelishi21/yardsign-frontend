@@ -187,20 +187,21 @@ export const displayAPI = {
   },
 
   uploadMedia: async (displayId: string, file: File): Promise<Display> => {
-    const formData = new FormData();
-    formData.append('media', file);
+    // 1. Get presigned URL
+    const { data: presignedData } = await api.get(`/displays/${displayId}/upload-url?fileType=${encodeURIComponent(file.type)}`);
     
-    const response = await api.post(`/displays/${displayId}/upload-media`, formData, {
+    // 2. Upload directly to S3
+    await axios.put(presignedData.uploadUrl, file, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': file.type,
       },
-      timeout: 60000, // 60 second timeout for uploads
       onUploadProgress: (progressEvent) => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
         console.log('Upload progress:', percentCompleted + '%');
       },
     });
-    return response.data;
+
+    return { id: displayId, mediaUrl: presignedData.mediaUrl, mediaType: presignedData.mediaType } as Display;
   },
 
   removeMedia: async (displayId: string): Promise<Display> => {

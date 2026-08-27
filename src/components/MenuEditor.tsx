@@ -75,24 +75,36 @@ export default function MenuEditor({ menu, onSave, onCancel }: MenuEditorProps) 
     console.log('Uploading image for item:', selectedItem, 'File:', file.name);
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-
       const token = localStorage.getItem('token');
       console.log('Using token:', token ? 'Present' : 'Missing');
 
-      const response = await fetch(`/api/items/${selectedItem}/upload-image`, {
-        method: 'POST',
+      // 1. Get presigned URL
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yaadsign.com';
+      const presignedResponse = await fetch(`${API_BASE_URL}/items/${selectedItem}/upload-url?fileType=${encodeURIComponent(file.type)}`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
-        },
-        body: formData
+        }
       });
 
-      console.log('Upload response status:', response.status);
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { uploadUrl, imageUrl } = await presignedResponse.json();
+
+      // 2. Upload directly to S3
+      const s3Response = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        }
+      });
+
+      console.log('Upload response status:', s3Response.status);
       
-      if (response.ok) {
-        const { imageUrl } = await response.json();
+      if (s3Response.ok) {
         console.log('Upload successful, imageUrl:', imageUrl);
         setMenuItems(prev => prev.map(item => 
           item.id === selectedItem 
@@ -100,9 +112,9 @@ export default function MenuEditor({ menu, onSave, onCancel }: MenuEditorProps) 
             : item
         ));
       } else {
-        const errorData = await response.json();
-        console.error('Upload failed:', errorData.error);
-        alert('Failed to upload image: ' + errorData.error);
+        const errorText = await s3Response.text();
+        console.error('Upload failed:', errorText);
+        alert('Failed to upload image: ' + errorText);
       }
     } catch (error) {
       console.error('Error uploading image:', error);

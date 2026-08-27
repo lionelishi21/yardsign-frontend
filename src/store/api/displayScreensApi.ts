@@ -90,16 +90,36 @@ export const displayScreensApi = apiSlice.injectEndpoints({
 
     // Upload media to display
     uploadDisplayMedia: builder.mutation<Display, { displayId: string; file: File }>({
-      query: ({ displayId, file }) => {
-        const formData = new FormData();
-        formData.append('media', file);
-        
-        return {
-          url: `/displays/${displayId}/upload-media`,
-          method: 'POST',
-          body: formData,
-          formData: true,
-        };
+      queryFn: async ({ displayId, file }, _queryApi, _extraOptions, fetchWithBQ) => {
+        try {
+          // 1. Get presigned URL
+          const presignedResult = await fetchWithBQ({
+            url: `/displays/${displayId}/upload-url?fileType=${encodeURIComponent(file.type)}`,
+            method: 'GET',
+          });
+
+          if (presignedResult.error) return { error: presignedResult.error };
+
+          const { uploadUrl, mediaUrl, mediaType } = presignedResult.data as { uploadUrl: string, mediaUrl: string, mediaType: string };
+
+          // 2. Upload to S3 directly
+          const s3Response = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type,
+            }
+          });
+
+          if (!s3Response.ok) {
+            return { error: { status: s3Response.status, data: 'Failed to upload to S3' } as any };
+          }
+
+          // Return partial item
+          return { data: { id: displayId, mediaUrl, mediaType } as unknown as Display };
+        } catch (error) {
+          return { error: { status: 500, data: String(error) } as any };
+        }
       },
       invalidatesTags: (result, error, { displayId }) => [
         { type: 'Display', id: displayId },

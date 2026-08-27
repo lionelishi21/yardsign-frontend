@@ -1,100 +1,89 @@
-import { io, Socket } from 'socket.io-client';
+// VITE_SOCKET_URL should now point to wss://<api-id>.execute-api.<region>.amazonaws.com/<stage>
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'wss://api.yaadsign.com';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://api.yaadsign.com';
+type Callback = (data: any) => void;
 
 class SocketService {
-  private socket: Socket | null = null;
-  private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
+  private socket: WebSocket | null = null;
+  private listeners: Record<string, Callback[]> = {};
+  private token: string | null = null;
 
   connect(token?: string) {
-    if (this.socket?.connected) return;
+    if (this.socket?.readyState === WebSocket.OPEN) return;
+    
+    if (token) {
+      this.token = token;
+    }
 
-    this.socket = io(SOCKET_URL, {
-      auth: token ? { token } : undefined,
-    });
+    try {
+      // In a real API Gateway WebSocket, we might need to pass token in query string if auth is required
+      // e.g. wss://url?token=xxx. Here we just connect.
+      this.socket = new WebSocket(SOCKET_URL);
 
-    this.socket.on('connect', () => {
-      console.log('Connected to Socket.IO server');
-    });
+      this.socket.onopen = () => {
+        console.log('Connected to WebSocket server');
+        this.triggerEvent('connect', null);
+      };
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from Socket.IO server');
-    });
+      this.socket.onclose = () => {
+        console.log('Disconnected from WebSocket server');
+        this.triggerEvent('disconnect', null);
+      };
 
-    // Set up event listeners
-    this.setupEventListeners();
+      this.socket.onerror = (error) => {
+        console.error('WebSocket Error:', error);
+      };
+
+      this.socket.onmessage = (messageEvent) => {
+        try {
+          const payload = JSON.parse(messageEvent.data);
+          // Assuming backend sends: { event: 'menu-created', data: { ... } }
+          if (payload.event) {
+            this.triggerEvent(payload.event, payload.data);
+          }
+        } catch (e) {
+          console.error('Failed to parse WebSocket message', e);
+        }
+      };
+    } catch (e) {
+      console.error('Failed to create WebSocket', e);
+    }
   }
 
   disconnect() {
     if (this.socket) {
-      this.socket.disconnect();
+      this.socket.close();
       this.socket = null;
     }
   }
 
-  private setupEventListeners() {
-    if (!this.socket) return;
-
-    const events = [
-      'menu-created',
-      'menu-updated',
-      'menu-deleted',
-      'item-created',
-      'item-updated',
-      'item-deleted',
-      'item-availability-changed',
-      'display-created',
-      'display-updated',
-      'display-paired',
-      'menu-assigned',
-      'restaurant-updated',
-    ];
-
-    events.forEach((event) => {
-      this.socket!.on(event, (data) => {
-        const listeners = this.listeners.get(event);
-        if (listeners) {
-          listeners.forEach((listener) => listener(data));
-        }
-      });
-    });
-  }
-
-  on(event: string, callback: (data: unknown) => void) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
+  on(event: string, callback: Callback) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
     }
-    this.listeners.get(event)!.add(callback);
+    this.listeners[event].push(callback);
+
+    // Return a function to unsubscribe
+    return () => {
+      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    };
   }
 
-  off(event: string, callback: (data: unknown) => void) {
-    const listeners = this.listeners.get(event);
-    if (listeners) {
-      listeners.delete(callback);
+  private triggerEvent(event: string, data: any) {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(cb => cb(data));
     }
   }
 
-  // Join display room for real-time updates
-  joinDisplay(displayId: string) {
-    if (this.socket) {
-      this.socket.emit('join-display', displayId);
-    }
-  }
-
-  // Join pairing room
-  joinPairing(pairingCode: string) {
-    if (this.socket) {
-      this.socket.emit('pair-display', { pairingCode });
-    }
-  }
-
-  // Emit events (for future use)
-  emit(event: string, data: unknown) {
-    if (this.socket) {
-      this.socket.emit(event, data);
+  emit(action: string, data: any) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      // API Gateway expects a JSON body. We can use `action` to route it to different Lambda handlers or $default
+      this.socket.send(JSON.stringify({ action, data }));
+    } else {
+      console.warn('WebSocket is not connected. Cannot emit:', action);
     }
   }
 }
 
 export const socketService = new SocketService();
-export default socketService; 
+export default socketService;
